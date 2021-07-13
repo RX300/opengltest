@@ -10,12 +10,13 @@
 
 
 
-enum VAO_IDs { Triangles, NumVAOs=2 };
-enum Buffer_IDs { ArrayBuffer, NumBuffers=2 };
+enum VAO_IDs { Triangles, NumVAOs=3 };
+enum Buffer_IDs { ArrayBuffer, NumBuffers=3 };
 enum Attrib_IDs { vPosition = 0 };
 
 GLuint  VAOs[NumVAOs];
 GLuint  Buffers[NumBuffers];
+GLuint ebo[1];
 GLint  uniformindex;
 GLfloat timeLoc=0;
 
@@ -34,12 +35,19 @@ GLfloat  vertices[NumVertices][2] = {
 { -0.50f, -0.90f }, {  0.85f, -0.90f }, { -0.90f,  0.85f },  // Triangle 1
 		{  0.90f,  0.90f },{  0.90f, -0.85f },  { -0.85f,  0.90f }   // Triangle 2
 	};
+	// A single triangle
+static const GLfloat vertex_positions[] =
+	{
+		-0.5f, 0.5f,  0.0f, 1.0f,//正方形左上
+		-0.5f, -0.5f,  0.0f, 1.0f,//正方形左下
+		0.5f,  -0.5f,  0.0f, 1.0f,//正方形右下
+		0.5f, 0.5f, 0.0f, 1.0f,//正方形右上
+	};
 
 void
 init(void)
 {
 
-	
 	//这里没设置VAO但是程序也能运行的原因貌似是opengl有默认VAO,因此如果不对VAO设置改变的话display()函数
 	//中的glBindVertexArray(VAOs[Triangles])可以取消掉,因为init()里已经绑定过一次了.
 	glCreateVertexArrays(NumVAOs,VAOs);
@@ -60,6 +68,29 @@ init(void)
 		GL_FALSE, 2 * sizeof(float), BUFFER_OFFSET(0));//glVertexAttribPointer 指定了
 //渲染时索引值为 index（vPosition） 的顶点属性数组的数据格式和位置，也就是指着色器中location=0的数据
 	glEnableVertexAttribArray(vPosition);//启用顶点属性数组
+
+//ebo测试
+	static const GLushort vertex_indices[] =
+	{
+		0, 1, 2, 0,2,3
+	};
+	glBindVertexArray(VAOs[2]);
+	glCreateBuffers(1, ebo);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo[0]);
+	glNamedBufferStorage(ebo[0], sizeof(vertex_indices), vertex_indices, GL_DYNAMIC_STORAGE_BIT);
+
+	
+	glBindBuffer(GL_ARRAY_BUFFER, Buffers[2]);
+	glNamedBufferStorage(Buffers[2], sizeof(vertex_positions), vertex_positions, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(vPosition, 4, GL_FLOAT,
+		GL_FALSE, 4 * sizeof(float), BUFFER_OFFSET(0));//glVertexAttribPointer 指定了
+//渲染时索引值为 index（vPosition） 的顶点属性数组的数据格式和位置，也就是指着色器中location=0的数据
+	glEnableVertexAttribArray(vPosition);//启用顶点属性数组
+
+
+
+
+
 	ShaderInfo  shaders[] =
 	{
 		{ GL_VERTEX_SHADER, "triangles.vert" },
@@ -71,7 +102,7 @@ init(void)
 	glUseProgram(program);//使用链接过的着色器程序
 
 	uniformindex =glGetUniformLocation(program,"time");
-	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
 }
 
 //----------------------------------------------------------------------------
@@ -103,7 +134,10 @@ display(void)
 	  }
 
 	
-	glDrawArrays(GL_TRIANGLES, 0, NumVertices);//使用当前绑定的顶点数组元素建立一系列的几何图元
+	//glDrawArrays(GL_TRIANGLES, 0, NumVertices);//使用当前绑定的顶点数组元素建立一系列的几何图元
+
+	glBindVertexArray(VAOs[2]);
+	glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_SHORT,NULL);
 	_sleep(15);
 	
 }
