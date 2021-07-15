@@ -43,7 +43,10 @@ static const GLfloat vertex_positions[] =
 		0.5f,  -0.5f,  0.0f, 1.0f,//正方形右下
 		0.5f, 0.5f, 0.0f, 1.0f,//正方形右上
 	};
-
+static const GLfloat vertex_colors[] =
+{
+	0.5f, 0.8f, 1.0f, 1.0f,
+};
 void
 init(void)
 {
@@ -81,11 +84,13 @@ init(void)
 
 	
 	glBindBuffer(GL_ARRAY_BUFFER, Buffers[2]);
-	glNamedBufferStorage(Buffers[2], sizeof(vertex_positions), vertex_positions, GL_DYNAMIC_STORAGE_BIT);
-	glVertexAttribPointer(vPosition, 4, GL_FLOAT,
-		GL_FALSE, 4 * sizeof(float), BUFFER_OFFSET(0));//glVertexAttribPointer 指定了
-//渲染时索引值为 index（vPosition） 的顶点属性数组的数据格式和位置，也就是指着色器中location=0的数据
-	glEnableVertexAttribArray(vPosition);//启用顶点属性数组
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_positions) + sizeof(vertex_colors), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertex_positions), vertex_positions);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertex_positions), sizeof(vertex_colors), vertex_colors);
+	glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid *)sizeof(vertex_positions));
+	glEnableVertexAttribArray(0);
+	glEnableVertexAttribArray(1);
 
 
 
@@ -102,7 +107,7 @@ init(void)
 	glUseProgram(program);//使用链接过的着色器程序
 
 	uniformindex =glGetUniformLocation(program,"time");
-	glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+
 }
 
 //----------------------------------------------------------------------------
@@ -137,7 +142,7 @@ display(void)
 	//glDrawArrays(GL_TRIANGLES, 0, NumVertices);//使用当前绑定的顶点数组元素建立一系列的几何图元
 
 	glBindVertexArray(VAOs[2]);
-	glDrawElements(GL_TRIANGLES,6,GL_UNSIGNED_SHORT,NULL);
+	glDrawElements(GL_TRIANGLE_STRIP,6,GL_UNSIGNED_SHORT,NULL);
 	_sleep(15);
 	
 }
@@ -152,7 +157,7 @@ int
 main(int argc, char** argv)
 {
 	glfwInit();
-	GLFWwindow* window = glfwCreateWindow(800, 600, "Te", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(1024, 720, "Te", NULL, NULL);
 
 	glfwMakeContextCurrent(window);
 	gl3wInit();
