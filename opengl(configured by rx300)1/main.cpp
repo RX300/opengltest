@@ -10,8 +10,8 @@
 
 
 
-enum VAO_IDs { Triangles, NumVAOs=3 };
-enum Buffer_IDs { ArrayBuffer, NumBuffers=3 };
+enum VAO_IDs { Triangles, NumVAOs=4 };
+enum Buffer_IDs { ArrayBuffer, NumBuffers=5 };
 enum Attrib_IDs { vPosition = 0 };
 
 GLuint  VAOs[NumVAOs];
@@ -34,6 +34,18 @@ GLfloat  vertices[NumVertices][2] = {
 	GLfloat  vertices2[NumVertices][2] = {
 { -0.50f, -0.90f }, {  0.85f, -0.90f }, { -0.90f,  0.85f },  // Triangle 1
 		{  0.90f,  0.90f },{  0.90f, -0.85f },  { -0.85f,  0.90f }   // Triangle 2
+	};
+	GLfloat  vertices_LINE[NumVertices][2] = {
+		{ -0.90f, -0.90f }, {  0.85f, -0.90f }, { -0.90f,  0.85f },  // Triangle 1
+		{  0.90f,  0.90f },{  0.90f, -0.85f },  { -0.85f,  0.90f }   // Triangle 2
+	};
+	GLfloat color[NumVertices][4]={
+	{ 0.0f, 1.0f,0,1 }, 
+	{  0.0f, 1.0f,0,1  },
+	{ 0.0f, 1.0f,0,1  },
+		{ 0.0f, 1.0f,0,1 },
+	{  0.0f, 1.0f,0,1  },
+	{ 0.0f, 1.0f,0,1  }
 	};
 	// A single triangle
 static const GLfloat vertex_positions[] =
@@ -72,6 +84,7 @@ init(void)
 //渲染时索引值为 index（vPosition） 的顶点属性数组的数据格式和位置，也就是指着色器中location=0的数据
 	glEnableVertexAttribArray(vPosition);//启用顶点属性数组
 
+
 //ebo测试
 	static const GLushort vertex_indices[] =
 	{
@@ -92,8 +105,17 @@ init(void)
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-
-
+//边缘加亮
+	glBindVertexArray(VAOs[3]);
+	glBindBuffer(GL_ARRAY_BUFFER, Buffers[4]);
+	glNamedBufferStorage(Buffers[4], sizeof(vertices_LINE), vertices_LINE, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(vPosition, 2, GL_FLOAT,
+		GL_FALSE, 2 * sizeof(float), BUFFER_OFFSET(0));//
+	glBindBuffer(GL_ARRAY_BUFFER, Buffers[3]);
+	glNamedBufferStorage(Buffers[3], sizeof(color), color, GL_DYNAMIC_STORAGE_BIT);
+	glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(0);//启用顶点属性数组
+	glEnableVertexAttribArray(1);//启用顶点属性数组
 
 
 	ShaderInfo  shaders[] =
@@ -105,8 +127,9 @@ init(void)
 
 	GLuint program = LoadShaders(shaders);//读取文件和创建着色器程序
 	glUseProgram(program);//使用链接过的着色器程序
-
+	
 	uniformindex =glGetUniformLocation(program,"time");
+	int c;
 
 }
 
@@ -128,21 +151,21 @@ display(void)
 	  if (cur == 0)
 	  {
 		glBindVertexArray(VAOs[0]);//选择作为顶点数据使用的顶点数组
-		vertices[0][0] = { -0.90f };
 		cur = !cur;
 	  }
 	  else if(cur==1)
 	  {
 		glBindVertexArray(VAOs[1]);//选择作为顶点数据使用的顶点数组
-		vertices[0][0] = { -0.10f };
 		cur = !cur;
 	  }
-
-	
-	//glDrawArrays(GL_TRIANGLES, 0, NumVertices);//使用当前绑定的顶点数组元素建立一系列的几何图元
-
+	 glPolygonMode( GL_FRONT_AND_BACK,GL_FILL);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);//使用当前绑定的顶点数组元素建立一系列的几何图元
 	glBindVertexArray(VAOs[2]);
 	glDrawElements(GL_TRIANGLE_STRIP,6,GL_UNSIGNED_SHORT,NULL);
+	glBindVertexArray(VAOs[3]);
+	glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
+	glDrawArrays(GL_TRIANGLES, 0, NumVertices);//使用当前绑定的顶点数组元素建立一系列的几何图元
+
 	_sleep(15);
 	
 }
